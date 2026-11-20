@@ -778,11 +778,11 @@ function itemArt(k){ const g = el("g", {});
   else if (k === "peel"){ el("path", {d:"M-9 3 Q-3 -8 3 -2 Q8 3 11 -5 L12 -1 Q8 8 2 3 Q-3 -3 -8 7Z", fill:"#f09a1c", stroke:"#b86a08", "stroke-width":.7}, g); }
   else { el("path", {d:"M-6 0 Q0 -9 6 0 Q0 9 -6 0Z", fill:"#f4e2bb", stroke:"#b89a60", "stroke-width":.8}, g); el("path", {d:"M-3 0 H4", stroke:"#d6b97a", "stroke-width":.7}, g); }
   return g; }
-const ITEMS = TRAY.map((s, i) => { const g = el("g", {style:"cursor:grab;touch-action:none"}, teaSvg), art = itemArt(s.k); g.appendChild(art);
-  const hit = el("circle", {r:20, fill:"transparent"}, g); g.setAttribute("transform", `translate(${s.x} ${s.y})`); return {g, k:s.k, home:s, placed:false, i}; });
+const ITEMS = TRAY.map((s, i) => { const g = el("g", {style:"cursor:grab;touch-action:none"}, teaSvg), inner = el("g", {style:"transform-box:fill-box;transform-origin:50% 50%"}, g); inner.appendChild(itemArt(s.k));
+  el("circle", {r:20, fill:"transparent"}, g); g.setAttribute("transform", `translate(${s.x} ${s.y})`); return {g, inner, k:s.k, home:s, placed:false, i}; });
 let placedN = 0, tdrag = null;
 ITEMS.forEach(it => {
-  it.g.addEventListener("pointerdown", e => { if (it.placed || done.tea) return; initAudio(); e.preventDefault(); it.g.setPointerCapture(e.pointerId); tdrag = it; teaSvg.appendChild(it.g); it.g.style.cursor = "grabbing"; });
+  it.g.addEventListener("pointerdown", e => { if (it.placed || done.tea) return; initAudio(); e.preventDefault(); teaSvg.appendChild(it.g); it.g.setPointerCapture(e.pointerId); tdrag = it; it.g.style.cursor = "grabbing"; });
   it.g.addEventListener("pointermove", e => { if (tdrag !== it) return; const p = svgPt(teaSvg, e); it.g.setAttribute("transform", `translate(${p.x} ${p.y - 16}) scale(1.25)`); it.cur = [p.x, p.y - 16]; });
   const end = e => { if (tdrag !== it) return; tdrag = null; it.g.style.cursor = "grab"; const [x, y] = it.cur || it.home.x ? [it.cur ? it.cur[0] : it.home.x, it.cur ? it.cur[1] : it.home.y] : [0, 0];
     let best = null, bd = 28; SLOTS.forEach((s, si) => { if (s.taken || s.k !== it.k) return; const d = Math.hypot(s.x - x, s.y - y); if (d < bd){ bd = d; best = s; } });
@@ -790,7 +790,7 @@ ITEMS.forEach(it => {
     if (best){ best.taken = true; it.placed = true; it.g.setAttribute("transform", `translate(${best.x} ${best.y})`); SFX.clack(); placedN++; sparkle(0, 0, 0);
       msg("c-tea", ["", "A cherry for an eye 🍒", "Two eyes. It's looking at you 👀", "A peel for the nose", "Almonds for teeth… it's smiling!", ""][placedN]);
       if (placedN === 5) finishTea(); }
-    else { it.g.setAttribute("transform", `translate(${it.home.x} ${it.home.y})`); wob(it.g); msg("c-tea", "Not quite there. Drop it on the scone, where it belongs 🙂"); } };
+    else { it.g.setAttribute("transform", `translate(${it.home.x} ${it.home.y})`); wob(it.inner); msg("c-tea", "Not quite there. Drop it on the scone, where it belongs 🙂"); } };
   it.g.addEventListener("pointerup", end); it.g.addEventListener("pointercancel", end);
 });
 function finishTea(){ $("grin").setAttribute("opacity", 1); $("teapot").setAttribute("opacity", 1); SFX.cup();
